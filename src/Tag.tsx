@@ -1,5 +1,17 @@
-import type {CustomStyleSheet} from './App';
 import React, {useState} from 'react';
+import styled from 'styled-components';
+
+export const Button = styled.button`
+	background-color: #e0e0e0;
+	border: none;
+	border-radius: 50%;
+	width: 25px;
+	height: 25px;
+	margin-left: 5px;
+	cursor: pointer;
+	fontweight: bold;
+	color: #525252;
+`;
 
 export interface TagRecord {
 	id: string;
@@ -9,88 +21,60 @@ export interface TagRecord {
 interface TagProps {
 	tag: TagRecord;
 	onDelete: (id: string) => void;
+	onEdit: (tag: TagRecord) => void;
 }
 
-interface TagAddButtonProps {
-	onClick: (name: string) => void;
-}
-
-export const TagAddButton: React.FunctionComponent<TagAddButtonProps> = (props) => {
-	const [name, setName] = useState<string>('');
+const Tag: React.FunctionComponent<TagProps> = (props) => {
 	const [isActive, setIsActive] = useState(false);
+	const [name, setName] = useState(props.tag.name);
 
-	const onClick = () => {
-		if (isActive) {
-			props.onClick(name);
-			setIsActive(false);
-			setName('');
+	const onBlur = () => {
+		if (name) {
+			props.onEdit({id: props.tag.id, name});
 		} else {
-			setIsActive(true);
+			props.onDelete(props.tag.id);
 		}
+		setIsActive(false);
 	};
 
 	return (
-		<div style={{...styles.tagStyle, paddingLeft: isActive ? 8 : 0}}>
-			{isActive && (
+		<div style={tagStyle} onClick={() => setIsActive(true)}>
+			{isActive ? (
 				<input
-					style={{...styles.inputStyle, ...styles.textStyle}}
 					type="text"
 					value={name}
+					style={inputStyle}
 					onChange={(e) => setName(e.target.value)}
-					placeholder="Type here..."
+					onBlur={onBlur}
+					placeholder="Add tag..."
 					autoFocus
 				/>
+			) : (
+				<p>{props.tag.name}</p>
 			)}
-			<button style={{...styles.buttonStyle, fontSize: 22, fontWeight: 'medium'}} onClick={onClick}>
-				+
-			</button>
+			<Button onClick={() => props.onDelete(props.tag.id)}>✕</Button>
 		</div>
 	);
 };
 
-const Tag: React.FunctionComponent<TagProps> = (props) => {
-	return (
-		<div style={styles.tagStyle}>
-			<p>{props.tag.name}</p>
-			<button style={{...styles.buttonStyle}} onClick={() => props.onDelete(props.tag.id)}>
-				✕
-			</button>
-		</div>
-	);
+export const tagStyle: React.CSSProperties = {
+	backgroundColor: '#F1FFFA',
+	display: 'flex',
+	flexDirection: 'row',
+	borderRadius: '15px',
+	alignItems: 'center',
+	margin: 5,
+	padding: 4,
+	paddingLeft: 8,
 };
 
-const styles: CustomStyleSheet = {
-	tagStyle: {
-		display: 'flex',
-		flexDirection: 'row',
-		backgroundColor: '#F1FFFA',
-		borderRadius: '15px',
-		alignItems: 'center',
-		margin: 5,
-		padding: 4,
-		paddingLeft: 8,
-	},
-	buttonStyle: {
-		backgroundColor: '#E0E0E0',
-		border: 'none',
-		borderRadius: '50%',
-		width: 25,
-		height: 25,
-		marginLeft: 5,
-		cursor: 'pointer',
-		fontWeight: 'bold',
-	},
-	inputStyle: {
-		display: 'flex',
-		backgroundColor: 'transparent',
-		border: 'none',
-		outline: 'none',
-		width: 80,
-		maxWidth: 120,
-	},
-	textStyle: {
-		fontSize: 16,
-	},
+export const inputStyle: React.CSSProperties = {
+	backgroundColor: 'transparent',
+	border: 'none',
+	outline: 'none',
+	width: 80,
+	maxWidth: 120,
+	fontSize: 16,
 };
 
 export default Tag;

@@ -1,19 +1,14 @@
 import useApi from './useApi';
-import Tag, {TagAddButton} from './Tag';
+import Tag from './Tag';
+import TagAddButton from './TagAddButton';
 import type {TagRecord} from './Tag';
 import {useCallback, useEffect, useMemo, useState} from 'react';
 
-export interface CustomStyleSheet {
-	[key: string]: {
-		[key in keyof React.CSSProperties]: React.CSSProperties[key];
-	};
-}
-
 function App() {
 	const tags = useApi<TagRecord[] | null>('/tags');
-	const [localTags, setLocalTags] = useState<TagRecord[] | null>(null);
-	const [deletedTags, setDeletedTags] = useState<string[]>([]);
+	const [localTags, setLocalTags] = useState<TagRecord[]>([]);
 
+	// Set local tags when the API call resolves
 	useEffect(() => {
 		if (!tags) {
 			return;
@@ -23,66 +18,69 @@ function App() {
 
 	const deleteTag = useCallback(
 		(id: string) => {
-			setDeletedTags([...deletedTags, id]);
+			setLocalTags([...localTags.filter((tag) => tag.id !== id)]);
 		},
-		[deletedTags]
+		[localTags]
+	);
+
+	const editTag = useCallback(
+		(tag: TagRecord) => {
+			setLocalTags([
+				...localTags.map((oldTag) => {
+					if (oldTag.id === tag.id) {
+						return tag;
+					}
+					return oldTag;
+				}),
+			]);
+		},
+		[localTags]
 	);
 
 	const addTag = useCallback(
 		(name: string) => {
-			if (localTags === null) {
-				return;
-			}
-
-			const newTag: TagRecord = {
-				name,
-				id: localTags[localTags.length - 1].id + 1,
-			};
-
-			setLocalTags([...localTags, newTag]);
+			const lastId = parseInt(localTags[localTags.length - 1].id ?? 0);
+			setLocalTags([
+				...localTags,
+				{
+					name,
+					id: (lastId + 1).toString(),
+				},
+			]);
 		},
 		[localTags]
 	);
 
 	const tagList = useMemo(() => {
-		if (!localTags) {
-			return null;
-		}
-
 		return [
 			...localTags?.map((tag) => {
-				if (deletedTags.includes(tag.id)) {
-					return null;
-				}
-				return <Tag onDelete={deleteTag} tag={tag} key={tag.id} />;
+				return <Tag onDelete={deleteTag} onEdit={editTag} tag={tag} key={tag.id} />;
 			}),
-			<TagAddButton onClick={addTag} key={'0'} />,
+			<TagAddButton onClick={addTag} key={'add_tag'} />,
 		];
-	}, [localTags, deletedTags, addTag, deleteTag]);
+	}, [localTags, addTag, editTag, deleteTag]);
 
-	console.log(localTags);
 	return (
-		<div style={styles.container}>
-			<div style={styles.tagListContainer}>{tagList}</div>
-		</div>
+		<main style={container}>
+			<div style={tagListContainer}>{tagList}</div>
+		</main>
 	);
 }
 
-const styles: CustomStyleSheet = {
-	container: {
-		display: 'flex',
-		flex: 1,
-		height: '100vh',
-		flexDirection: 'column',
-		justifyContent: 'center',
-		backgroundColor: '#2C8C99',
-	},
-	tagListContainer: {
-		display: 'flex',
-		flexWrap: 'wrap',
-		alignSelf: 'center',
-		maxWidth: 380,
-	},
+const container: React.CSSProperties = {
+	display: 'flex',
+	flex: 1,
+	height: '100vh',
+	flexDirection: 'column',
+	justifyContent: 'center',
+	backgroundColor: '#2C8C99',
+};
+
+const tagListContainer: React.CSSProperties = {
+	display: 'flex',
+	flexWrap: 'wrap',
+	alignSelf: 'center',
+	maxWidth: 720,
 };
 
 export default App;

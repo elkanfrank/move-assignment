@@ -1,9 +1,12 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('adding a tag', async () => {
+	render(<App />);
+	const button = await screen.findByText('+');
+	expect(button).toBeDefined();
+	fireEvent.click(button);
+
+	screen.getByPlaceholderText('Add tag...');
 });
