@@ -1,7 +1,7 @@
 import useApi from './useApi';
 import Tag, {TagAddButton} from './Tag';
 import type {TagRecord} from './Tag';
-import {useCallback, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 
 export interface CustomStyleSheet {
 	[key: string]: {
@@ -11,8 +11,15 @@ export interface CustomStyleSheet {
 
 function App() {
 	const tags = useApi<TagRecord[] | null>('/tags');
+	const [localTags, setLocalTags] = useState<TagRecord[] | null>(null);
 	const [deletedTags, setDeletedTags] = useState<string[]>([]);
-	const [addedTags, setAddedTags] = useState<TagRecord[]>([]);
+
+	useEffect(() => {
+		if (!tags) {
+			return;
+		}
+		setLocalTags(tags);
+	}, [tags]);
 
 	const deleteTag = useCallback(
 		(id: string) => {
@@ -21,15 +28,29 @@ function App() {
 		[deletedTags]
 	);
 
-	const addTag = useCallback(() => {}, []);
+	const addTag = useCallback(
+		(name: string) => {
+			if (localTags === null) {
+				return;
+			}
 
-	const taglist = useMemo(() => {
-		if (!tags) {
+			const newTag: TagRecord = {
+				name,
+				id: localTags[localTags.length - 1].id + 1,
+			};
+
+			setLocalTags([...localTags, newTag]);
+		},
+		[localTags]
+	);
+
+	const tagList = useMemo(() => {
+		if (!localTags) {
 			return null;
 		}
 
 		return [
-			...tags?.map((tag) => {
+			...localTags?.map((tag) => {
 				if (deletedTags.includes(tag.id)) {
 					return null;
 				}
@@ -37,17 +58,18 @@ function App() {
 			}),
 			<TagAddButton onClick={addTag} key={'0'} />,
 		];
-	}, [tags, deletedTags, addTag, deleteTag]);
+	}, [localTags, deletedTags, addTag, deleteTag]);
 
+	console.log(localTags);
 	return (
-		<div style={styles.containerStyle}>
-			<div style={styles.tagListContainer}>{taglist}</div>
+		<div style={styles.container}>
+			<div style={styles.tagListContainer}>{tagList}</div>
 		</div>
 	);
 }
 
 const styles: CustomStyleSheet = {
-	containerStyle: {
+	container: {
 		display: 'flex',
 		flex: 1,
 		height: '100vh',
