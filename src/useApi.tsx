@@ -1,8 +1,8 @@
 import axios from 'axios';
 import {useEffect, useState} from 'react';
 
-const BASE_URL = 'https://64b80f4921b9aa6eb07980bd.mockapi.io';
-type Endpoint = '/tags' | '/users';
+export const BASE_URL = 'https://64b80f4921b9aa6eb07980bd.mockapi.io';
+export type Endpoint = '/tags';
 
 const useApi = <T,>(endpoint: Endpoint): T | null => {
 	const [data, setData] = useState<T | null>(null);

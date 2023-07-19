@@ -1,6 +1,7 @@
 import useApi from './useApi';
-import Tag from './Tag';
+import Tag, {TagAddButton} from './Tag';
 import type {TagRecord} from './Tag';
+import {useCallback, useMemo, useState} from 'react';
 
 export interface CustomStyleSheet {
 	[key: string]: {
@@ -10,12 +11,33 @@ export interface CustomStyleSheet {
 
 function App() {
 	const tags = useApi<TagRecord[] | null>('/tags');
+	const [deletedTags, setDeletedTags] = useState<string[]>([]);
+	const [addedTags, setAddedTags] = useState<TagRecord[]>([]);
 
-	if (!tags) {
-		return <div>Loading...</div>;
-	}
+	const deleteTag = useCallback(
+		(id: string) => {
+			setDeletedTags([...deletedTags, id]);
+		},
+		[deletedTags]
+	);
 
-	const taglist = tags.map((tag) => <Tag tag={tag} key={tag.id} />);
+	const addTag = useCallback(() => {}, []);
+
+	const taglist = useMemo(() => {
+		if (!tags) {
+			return null;
+		}
+
+		return [
+			...tags?.map((tag) => {
+				if (deletedTags.includes(tag.id)) {
+					return null;
+				}
+				return <Tag onDelete={deleteTag} tag={tag} key={tag.id} />;
+			}),
+			<TagAddButton onClick={addTag} key={'0'} />,
+		];
+	}, [tags, deletedTags, addTag, deleteTag]);
 
 	return (
 		<div style={styles.containerStyle}>
@@ -37,7 +59,7 @@ const styles: CustomStyleSheet = {
 		display: 'flex',
 		flexWrap: 'wrap',
 		alignSelf: 'center',
-		maxWidth: 340,
+		maxWidth: 380,
 	},
 };
 
